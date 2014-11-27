@@ -47,10 +47,7 @@ namespace NPerfectHash
             return (((((firstHashCoefficient >> 32LLU) << 32LLU) * key) % PRIME + ((firstHashCoefficient & UINT_MAX) * key) % PRIME + secondHashCoefficient) % PRIME) % sizeOfSet;
         }
     };
-    //Hash::generator.seed(rand());
-    //std::uniform_int_distribution<unsigned long long> firstCoefficientGenerator = std::uniform_int_distribution<unsigned long long>(1LLU, Hash::PRIME - 1);
-    //std::uniform_int_distribution<unsigned long long> secondCoefficientGenerator = std::uniform_int_distribution<unsigned long long>(0LLU, Hash::PRIME - 1);
-
+    
     template<class SetType>
     void chooseHashFunction(std::vector<unsigned int> const &elements, SetType &hashSet, unsigned int (*sizeConversion) (unsigned int))
     {
@@ -63,19 +60,6 @@ namespace NPerfectHash
         }
         while (hashSet.isBadHashFunction(elements));
     }
-
-    /*class ExceptionScheme : public std::exception
-    {
-        std::string messageTemplate;
-    public:
-        unsigned int whichElement;
-        
-        virtual const char* what() const throw()
-        {
-            return messageTemplate.c_str();
-        }
-    };
-    */
         
     class EqualElementsException: public std::exception
     {
@@ -204,7 +188,7 @@ namespace NPerfectHash
             
             bool isPossible(unsigned int element) const
             {
-                return (hashAvalible[hash(element)] && hashElement[hash(element)] == element);
+                return (presence.size() && hashAvalible[hash(element)] && hashElement[hash(element)] == element);
             }
         };
         
@@ -240,13 +224,13 @@ namespace NPerfectHash
                 {
                     checkEqualityAndThrowExceptionIfEqual(setElements[i - 1], setElements[i]);
                 }
-                if (setElements.size() == 3u)
+                if (setElements.size() == 3U)
                 {
                     checkEqualityAndThrowExceptionIfEqual(setElements.front(), setElements.back());
                 }
                 sumOfSquaresOfInnerSetSizes += square(setElements.size());
             }
-            return (sumOfSquaresOfInnerSetSizes > 3llu * sizeOfSet);
+            return (sumOfSquaresOfInnerSetSizes > 3LLU * sizeOfSet);
         }
         
         

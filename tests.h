@@ -20,6 +20,17 @@ namespace NPerfectHashTests
         SIZE,
         EXIT
     };
+    
+    class Event
+    {
+    public:
+        EActionType type;
+        unsigned int element;
+        Event(EActionType type, unsigned int element) : type(type), element(element)
+        {
+        }
+    };
+    
     unsigned int const EActionTypeSize = 6;
     
     class WorkingSet: public NPerfectHash::ISet
@@ -83,10 +94,49 @@ namespace NPerfectHashTests
     {
     public:
         virtual std::vector<unsigned int> const &getAvalibleElements() const = 0;
-        virtual std::pair<EActionType, unsigned int> nextQuery() = 0;
+        virtual Event nextQuery() = 0;
         virtual unsigned int getNumberOfQueries() const = 0;
         virtual unsigned int getNumberOfElements() const = 0;
+        virtual bool nextInitialization() = 0;
+        virtual ~ITest(){}
+    };
+    
+    class PermutationTest: public ITest
+    {
+        std::vector <unsigned int> avalibleElements;
+    public:
+        PermutationTest(unsigned int n)
+        {
+            avalibleElements.resize(n);
+            for (unsigned int i = 0; i < n; ++i)
+            {
+                avalibleElements[i] = i + 1;
+            }
+        }
         
+        std::vector <unsigned int> const &getAvalibleElements() const
+        {
+            return avalibleElements;
+        }
+        
+        Event nextQuery()
+        {
+            return Event(EXIT, 0);
+        }
+        
+        unsigned int getNumberOfQueries() const
+        {
+            return 1U;
+        }
+        unsigned int getNumberOfElements() const
+        {
+            return avalibleElements.size();
+        }
+        
+        bool nextInitialization() 
+        {            
+            return std::next_permutation(avalibleElements.begin(), avalibleElements.end());
+        }
     };
     
     class RandomUniqueSeqAndCorectRandomQueriesTest: public ITest
@@ -94,17 +144,30 @@ namespace NPerfectHashTests
         std::vector <unsigned int> avalibleElements;
         unsigned int numberOfQueries;
         unsigned int calls;
-    public:
-        RandomUniqueSeqAndCorectRandomQueriesTest(unsigned int maxNumberOfElements, unsigned int maxNumberOfQueries)
+        unsigned int initialisations;
+        unsigned int maxNumberOfElements;
+        unsigned int maxNumberOfQueries;
+        unsigned int numberOfInitializations;
+        
+        void init()
         {
+            avalibleElements.clear();
             calls = 0U;
-            unsigned int n = rnd.next(0U, maxNumberOfElements);
+            unsigned int n = rnd.next(1U, maxNumberOfElements);
             avalibleElements.resize(n);
             for (unsigned int i = 0U; i < n; ++i)
                 avalibleElements[i] = rnd.next(0U, UINT_MAX);
             std::sort(avalibleElements.begin(), avalibleElements.end());
             avalibleElements.resize(std::distance(avalibleElements.begin(), std::unique(avalibleElements.begin(), avalibleElements.end())));
-            numberOfQueries = rnd.next(0U, maxNumberOfQueries);
+            numberOfQueries = rnd.next(1U, maxNumberOfQueries);
+        }
+        
+    public:
+        RandomUniqueSeqAndCorectRandomQueriesTest(unsigned int numberOfTests, unsigned int maxNumberOfElements, unsigned int maxNumberOfQueries) :
+            maxNumberOfElements(maxNumberOfElements), maxNumberOfQueries(maxNumberOfQueries), numberOfInitializations(numberOfTests)
+        {
+            initialisations = 0;
+            init();
         }
         
         std::vector<unsigned int> const &getAvalibleElements() const
@@ -112,13 +175,13 @@ namespace NPerfectHashTests
             return avalibleElements;
         }
         
-        std::pair<EActionType, unsigned int> nextQuery()
+        Event nextQuery()
         {
             if (++calls == numberOfQueries)
             {
-                return std::make_pair(EXIT, 0U);
+                return Event(EXIT, 0U);
             }
-            return std::make_pair(EActionType(rnd.next(0U, EActionTypeSize - 1U)), avalibleElements[rnd.next(0U, static_cast<unsigned int>(avalibleElements.size()) - 1U)]);
+            return Event(EActionType(rnd.next(0U, EActionTypeSize - 1U)), avalibleElements[rnd.next(0U, static_cast<unsigned int>(avalibleElements.size()) - 1U)]);
         }
 
         unsigned int getNumberOfElements() const 
@@ -130,45 +193,61 @@ namespace NPerfectHashTests
         {
             return numberOfQueries;
         }
+        
+        bool nextInitialization()
+        {
+            if (++initialisations == numberOfInitializations)
+            {
+                return false;
+            }
+            init();
+            return true;
+        }
     };
     
-    void test(ITest &testCase, NPerfectHash::ISet &firstSet, NPerfectHash::ISet &secondSet, unsigned int testNumber)
+    void test(ITest &testCase, NPerfectHash::ISet &firstSet, NPerfectHash::ISet &secondSet)
     {
-        firstSet.init(testCase.getAvalibleElements());
-        secondSet.init(testCase.getAvalibleElements());
-        
-        do
+        unsigned int testNumber = 0;
+        do 
         {
-            std::pair<EActionType, unsigned int> currentQuery = testCase.nextQuery();
-            switch (currentQuery.first)
+            ++testNumber;
+            firstSet.init(testCase.getAvalibleElements());
+            secondSet.init(testCase.getAvalibleElements());
+            Event currentQuery = testCase.nextQuery();
+            while (currentQuery.type != EXIT)
             {
-                case INSERT:
-                    firstSet.insert(currentQuery.second);
-                    secondSet.insert(currentQuery.second);
-                break; case ERASE:
-                    firstSet.erase(currentQuery.second);
-                    secondSet.erase(currentQuery.second);
-                break; case FIND:
-                    if (firstSet.find(currentQuery.second) != secondSet.find(currentQuery.second))
-                    {
-                        return void(printf("WRONG ANSWER TEST %u: %u SEARCH MISMATCH\n", testNumber, currentQuery.second));
-                    }
-                break; case IS_POSSIBLE:
-                    if (firstSet.isPossible(currentQuery.second) != secondSet.isPossible(currentQuery.second))
-                    {
-                        return void(printf("WRONG ANSWER TEST %u: %u POSSIBILITY MISMATCH\n", testNumber, currentQuery.second));
-                    }
-                break; case SIZE:
-                    if (firstSet.size() != secondSet.size())
-                    {
-                        return void(printf("WRONG ANSWER TEST %u: SIZE MISMATCH\n", testNumber));
-                    }
-                break; case EXIT:
-                    printf("OK TEST %u: %u elements %u queries\n", testNumber, testCase.getNumberOfElements(), testCase.getNumberOfQueries());
-                    return;
+                switch (currentQuery.type)
+                {
+                    case INSERT:
+                        firstSet.insert(currentQuery.element);
+                        secondSet.insert(currentQuery.element);
+                    break; case ERASE:
+                        firstSet.erase(currentQuery.element);
+                        secondSet.erase(currentQuery.element);
+                    break; case FIND:
+                        if (firstSet.find(currentQuery.element) != secondSet.find(currentQuery.element))
+                        {
+                            return void(printf("-\nWRONG ANSWER TEST %u: %u SEARCH MISMATCH\n", testNumber, currentQuery.element));
+                        }
+                    break; case IS_POSSIBLE:
+                        if (firstSet.isPossible(currentQuery.element) != secondSet.isPossible(currentQuery.element))
+                        {
+                            return void(printf("-\nWRONG ANSWER TEST %u: %u POSSIBILITY MISMATCH\n", testNumber, currentQuery.element));
+                        }
+                    break; case SIZE:
+                        if (firstSet.size() != secondSet.size())
+                        {
+                            return void(printf("-\nWRONG ANSWER TEST %u: SIZE MISMATCH\n", testNumber));
+                        }
+                    break;
+                }
+                currentQuery = testCase.nextQuery();
             }
+            printf("+");
         }
-        while (true);
+        while (testCase.nextInitialization());
+        printf("\n");
     }
+    
 };
 #endif

@@ -50,7 +50,8 @@ int main(int argc, char **argv)
         clock_t begin = clock();
         NPerfectHashTests::test(*testCase, &FKS, NULL);
         clock_t end = clock();
-        printf("Execution time: %.10lf\n", (double)(end - begin) / CLOCKS_PER_SEC);
+        printf("Execution time:          %.10lf\n", (double)(end - begin) / CLOCKS_PER_SEC);
+        printf("Average execution time:  %.10lf\n", (double)(end - begin) / CLOCKS_PER_SEC / arguments["numberOfTests"]);
     }
     else
     {

@@ -153,7 +153,7 @@ namespace NPerfectHashTests
         {
             avalibleElements.clear();
             calls = 0U;
-            unsigned int n = rnd.next(maxNumberOfElements / 2U, maxNumberOfElements);
+            unsigned int n = maxNumberOfElements;
             avalibleElements.resize(n);
             for (unsigned int i = 0U; i < n; ++i)
                 avalibleElements[i] = rnd.next(0U, UINT_MAX);
@@ -290,7 +290,9 @@ namespace NPerfectHashTests
                 }
                 currentQuery = testCase.nextQuery();
             }
+#ifndef DISABLE_POSITIVE_OUTPUT
             printf("+");
+#endif
         }
         while (testCase.nextInitialization());
         printf("\n");

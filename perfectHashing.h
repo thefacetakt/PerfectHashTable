@@ -102,7 +102,6 @@ namespace NPerfectHash
         {
             std::vector<bool> presence;
             std::vector<unsigned int> hashElement;
-            std::vector<bool> hashAvalible;
             
             Hash hash;
             unsigned int sizeOfSet;
@@ -115,7 +114,7 @@ namespace NPerfectHash
             bool isBadHashFunction(std::vector<unsigned int> const &elements)
             {
                 presence.assign(sizeOfSet, false);
-                hashElement.resize(sizeOfSet);
+                hashElement.assign(sizeOfSet, 0U);
                 for (auto const &element: elements)
                 {
                     unsigned int currentHash = hash(element);
@@ -147,10 +146,9 @@ namespace NPerfectHash
                 );
                 
                 presence.assign(sizeOfSet, false);
-                hashAvalible.assign(sizeOfSet, false);
-                for (auto const &element: elements)
+                if (elements.size() && std::count(elements.begin(), elements.end(), 0U) == 0U)
                 {
-                    hashAvalible[hash(element)] = true;
+                    hashElement[hash(0U)] = 1U;
                 }
             }
             
@@ -188,7 +186,7 @@ namespace NPerfectHash
             
             bool isPossible(unsigned int element) const
             {
-                return (presence.size() && hashAvalible[hash(element)] && hashElement[hash(element)] == element);
+                return (presence.size() && hashElement[hash(element)] == element);
             }
         };
         

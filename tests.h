@@ -153,7 +153,7 @@ namespace NPerfectHashTests
         {
             avalibleElements.clear();
             calls = 0U;
-            unsigned int n = rnd.next(1U, maxNumberOfElements);
+            unsigned int n = rnd.next(maxNumberOfElements / 2U, maxNumberOfElements);
             avalibleElements.resize(n);
             for (unsigned int i = 0U; i < n; ++i)
                 avalibleElements[i] = rnd.next(0U, UINT_MAX);
@@ -205,41 +205,88 @@ namespace NPerfectHashTests
         }
     };
     
-    void test(ITest &testCase, NPerfectHash::ISet &firstSet, NPerfectHash::ISet &secondSet)
+    unsigned int processQuery(NPerfectHash::ISet *set, EActionType type, unsigned int element)
     {
-        unsigned int testNumber = 0;
+        switch (type)
+        {
+            case INSERT:
+                return (set->insert(element), element);
+            case ERASE:
+                return (set->erase(element), element);
+            case FIND:
+                return set->find(element);
+            case IS_POSSIBLE:
+                return set->isPossible(element);
+            case SIZE:
+                return set->size();
+        }
+        return 0U;
+    }
+    
+    void processQueryAndCatchException(NPerfectHash::ISet *set, EActionType type, unsigned int element, unsigned int &result, bool &exceptionHandled)
+    {
+        exceptionHandled = false;
+        try
+        {
+            result = processQuery(set, type, element);
+        }
+        catch(std::exception &)
+        {
+            exceptionHandled = true;
+        }
+    }
+    
+    void initiationWithExceptionHandling(NPerfectHash::ISet *set, std::vector<unsigned int> const &elements, bool &exceptionHandled)
+    {
+        exceptionHandled = false;
+        try
+        {
+            set->init(elements);
+        }
+        catch (std::exception &)
+        {
+            exceptionHandled = true;
+        }
+    }
+    
+    void test(ITest &testCase, NPerfectHash::ISet *firstSet, NPerfectHash::ISet *secondSet = NULL)
+    {
+        unsigned int testNumber = 0U;
         do 
         {
             ++testNumber;
-            firstSet.init(testCase.getAvalibleElements());
-            secondSet.init(testCase.getAvalibleElements());
+            bool firstExceptionHandled, secondExceptionHandled;
+            initiationWithExceptionHandling(firstSet, testCase.getAvalibleElements(), firstExceptionHandled);
+            if (secondSet)
+            {
+                initiationWithExceptionHandling(secondSet, testCase.getAvalibleElements(), secondExceptionHandled);
+                if (firstExceptionHandled != secondExceptionHandled)
+                {
+                    printf("\nDifferent Exception result - test %u\n", testNumber);
+                    continue;
+                }
+            }
+            
             Event currentQuery = testCase.nextQuery();
+            unsigned int firstSetResult, secondSetResult;
+            
             while (currentQuery.type != EXIT)
             {
-                switch (currentQuery.type)
+                processQueryAndCatchException(firstSet, currentQuery.type, currentQuery.element, firstSetResult, firstExceptionHandled);
+                if (secondSet)
                 {
-                    case INSERT:
-                        firstSet.insert(currentQuery.element);
-                        secondSet.insert(currentQuery.element);
-                    break; case ERASE:
-                        firstSet.erase(currentQuery.element);
-                        secondSet.erase(currentQuery.element);
-                    break; case FIND:
-                        if (firstSet.find(currentQuery.element) != secondSet.find(currentQuery.element))
-                        {
-                            return void(printf("-\nWRONG ANSWER TEST %u: %u SEARCH MISMATCH\n", testNumber, currentQuery.element));
-                        }
-                    break; case IS_POSSIBLE:
-                        if (firstSet.isPossible(currentQuery.element) != secondSet.isPossible(currentQuery.element))
-                        {
-                            return void(printf("-\nWRONG ANSWER TEST %u: %u POSSIBILITY MISMATCH\n", testNumber, currentQuery.element));
-                        }
-                    break; case SIZE:
-                        if (firstSet.size() != secondSet.size())
-                        {
-                            return void(printf("-\nWRONG ANSWER TEST %u: SIZE MISMATCH\n", testNumber));
-                        }
-                    break;
+                    processQueryAndCatchException(secondSet, currentQuery.type, currentQuery.element, secondSetResult, secondExceptionHandled);
+                    
+                    if (firstExceptionHandled != secondExceptionHandled)
+                    {
+                        printf("\nDifferent Exception result - test %u\n", testNumber);
+                        break;
+                    }
+                    if (firstSetResult != secondSetResult)
+                    {
+                        printf("\nDifferent Answers - test %u\n", testNumber);
+                        break;
+                    }
                 }
                 currentQuery = testCase.nextQuery();
             }

@@ -43,6 +43,30 @@ int main(int argc, char **argv)
             testCase = new NPerfectHashTests::RandomUniqueSeqAndCorectRandomQueriesTest(arguments["numberOfTests"], arguments["maxNumberOfElements"], arguments["maxNumberOfQueries"]);
         break; case 1U:  
             testCase = new NPerfectHashTests::PermutationTest(arguments["maxNumberOfElements"]);
+        break; case 2U:
+            testCase = new NPerfectHashTests::AllEqualInitTest(arguments["maxNumberOfElements"], arguments["numberOfTests"]);
+        break; case 3U:
+            testCase = new NPerfectHashTests::TwoElementInitTestStrongOrder(arguments["maxNumberOfElements"], arguments["numberOfTests"]);
+        break; case 4U:
+            testCase = new NPerfectHashTests::TwoElementInitTestRandomOrder(arguments["maxNumberOfElements"], arguments["numberOfTests"]);
+        break; case 5U:
+            testCase = new NPerfectHashTests::TwoElementInitTestEveryOrder(arguments["maxNumberOfElements"]);
+        break; case 6U:
+            testCase = new NPerfectHashTests::PairInitTest(arguments["maxNumberOfElements"], arguments["numberOfTests"]);
+        break; case 7U:
+            testCase = new NPerfectHashTests::PairInitRandomTest(arguments["maxNumberOfElements"], arguments["numberOfTests"]);
+        break; case 8U:
+            testCase = new NPerfectHashTests::BigKeyValuesAndRandomQueries(arguments["numberOfTests"], arguments["maxNumberOfElements"], arguments["maxNumberOfQueries"]);
+        break; case 9U:
+            testCase = new NPerfectHashTests::IsPossibleTrueTest(arguments["numberOfTests"], arguments["maxNumberOfElements"], arguments["maxNumberOfQueries"]);
+        break; case 10U:
+            testCase = new NPerfectHashTests::IsPossibleRandomTest(arguments["numberOfTests"], arguments["maxNumberOfElements"], arguments["maxNumberOfQueries"]);
+        break; case 11U:
+            testCase = new NPerfectHashTests::CleverSequenceOfQueriesTest(arguments["numberOfTests"], arguments["maxNumberOfElements"], arguments["maxNumberOfQueries"]);
+        break; case 12U:
+            testCase = new NPerfectHashTests::MultipleInsertTest(arguments["numberOfTests"], arguments["maxNumberOfElements"], arguments["maxNumberOfQueries"]);
+        break; case 13U:
+            testCase = new NPerfectHashTests::RandomKeyInsertTest(arguments["numberOfTests"], arguments["maxNumberOfElements"], arguments["maxNumberOfQueries"]);
         break;
     }
     if (arguments.find("timeMeasure") != arguments.end())

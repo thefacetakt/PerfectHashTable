@@ -31,25 +31,25 @@ namespace NPerfectHash
         unsigned int sizeOfSet;
         
     public:
-        void generateNewCoefficients()
+        inline void generateNewCoefficients()
         {
             firstHashCoefficient = rnd.next(1LLU, PRIME - 1LLU); 
             secondHashCoefficient = rnd.next(0LLU, PRIME - 1LLU);
         }
         
-        void setSize(unsigned int size)
+        inline void setSize(unsigned int size)
         {
             sizeOfSet = size;
         }
         
-        unsigned int operator()(unsigned int key) const
+        inline unsigned int operator()(unsigned int key) const
         {
             return (((((firstHashCoefficient >> 32LLU) << 32LLU) * key) % PRIME + ((firstHashCoefficient & UINT_MAX) * key) % PRIME + secondHashCoefficient) % PRIME) % sizeOfSet;
         }
     };
     
     template<class SetType>
-    void chooseHashFunction(std::vector<unsigned int> const &elements, SetType &hashSet, unsigned int (*sizeConversion) (unsigned int))
+    inline void chooseHashFunction(std::vector<unsigned int> const &elements, SetType &hashSet, unsigned int (*sizeConversion) (unsigned int))
     {
         hashSet.sizeOfSet = sizeConversion(elements.size());
         hashSet.hash.setSize(hashSet.sizeOfSet);
@@ -111,7 +111,7 @@ namespace NPerfectHash
                 init(elements);
             }
             
-            bool isBadHashFunction(std::vector<unsigned int> const &elements)
+            inline bool isBadHashFunction(std::vector<unsigned int> const &elements)
             {
                 presence.assign(sizeOfSet, false);
                 hashElement.assign(sizeOfSet, 0U);
@@ -137,7 +137,7 @@ namespace NPerfectHash
             
             friend void chooseHashFunction<InnerHashSet>(std::vector<unsigned int> const &, InnerHashSet &, unsigned int (unsigned int));
             
-            void init(std::vector<unsigned int> const &elements)
+            inline void init(std::vector<unsigned int> const &elements)
             {
                 chooseHashFunction(elements, *this, [] (unsigned int x) -> unsigned int 
                                                     {
@@ -152,7 +152,7 @@ namespace NPerfectHash
                 }
             }
             
-            void checkPossibility(unsigned int element) const
+            inline void checkPossibility(unsigned int element) const
             {
                 if (!isPossible(element))
                 {
@@ -160,7 +160,7 @@ namespace NPerfectHash
                 }
             }
             
-            bool operate(unsigned int element, bool operationType) // 1 - insert, 0 - remove;
+            inline bool operate(unsigned int element, bool operationType) // 1 - insert, 0 - remove;
             {
                 checkPossibility(element);
                 bool result = operationType ^ presence[hash(element)];
@@ -179,7 +179,7 @@ namespace NPerfectHash
             }
             
             bool find(unsigned int element) const
-            {
+            {           
                 checkPossibility(element);
                 return presence[hash(element)];
             }
@@ -197,7 +197,7 @@ namespace NPerfectHash
         unsigned int sizeOfSet;
         unsigned int numberOfElements;
         
-        void checkEqualityAndThrowExceptionIfEqual(unsigned int firstElement, unsigned int secondElement) const
+        inline void checkEqualityAndThrowExceptionIfEqual(unsigned int firstElement, unsigned int secondElement) const
         {
             if (firstElement == secondElement)
             {
@@ -205,7 +205,7 @@ namespace NPerfectHash
             }
         }
         
-        bool isBadHashFunction(std::vector<unsigned int> const &elements)
+        inline bool isBadHashFunction(std::vector<unsigned int> const &elements)
         {
             innerSetsElements.assign(sizeOfSet, std::vector<unsigned int> ());
             
@@ -232,7 +232,7 @@ namespace NPerfectHash
         }
         
         
-        void fillInnerHashSets()
+        inline void fillInnerHashSets()
         {
             innerHashSets.clear();
             innerHashSets.reserve(sizeOfSet);
@@ -246,7 +246,7 @@ namespace NPerfectHash
         friend void chooseHashFunction<PerfectHashSet>(std::vector<unsigned int> const &, PerfectHashSet &, unsigned int (unsigned int));
 
     public:
-        void init(std::vector<unsigned int> const &elements)
+        inline void init(std::vector<unsigned int> const &elements)
         {   
             numberOfElements = 0U;
             chooseHashFunction(elements, *this, [](unsigned int x) -> unsigned int
